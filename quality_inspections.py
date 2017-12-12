@@ -2,6 +2,7 @@
 
 from solrcloudpy.connection import SolrConnection
 from solrcloudpy.parameters import SearchOptions
+import happybase
 import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -15,15 +16,19 @@ sys.setdefaultencoding("utf-8")
 3. 存储质检结果。
 """
 
+SOLR_NODES = ["10.0.1.27:8983", "10.0.1.28:8983"]
+SOLR_VERSION = "5.5.1"
+SOLR_TIMEOUT = 60000
+SOLR_COLLECTION = "collection1"
+SOLR_ROWS = 1000000
+
+HBASE_HOST = "10.0.3.41"
+HBASE_TABLE = "smartv"
+HBASE_TIMEOUT = 60000
+
 
 def search_by_solr(solr_condtitions):
     """ 通过Solr完成检索 """
-    SOLR_NODES = ["10.0.1.27:8983", "10.0.1.28:8983"]
-    SOLR_VERSION = "5.5.1"
-    SOLR_TIMEOUT = 60000
-    SOLR_COLLECTION = "collection1"
-    SOLR_ROWS = 1000000
-
     conn = SolrConnection(
         SOLR_NODES, version=SOLR_VERSION, timeout=SOLR_TIMEOUT)
     coll = conn[SOLR_COLLECTION]
@@ -34,9 +39,15 @@ def search_by_solr(solr_condtitions):
                    .start(0) \
                    .rows(SOLR_ROWS)
 
-    r = coll.search(se)
-    docs = r.result.response.docs
-    return docs
+    docs = coll.search(se).result.response.docs
+    return map(lambda doc: doc["id"], docs)
+
+
+def get_metas(items, columns=None):
+    """ 获取元数据信息 """
+    hbase = happybase.Connection(HBASE_HOST, timeout=HBASE_TIMEOUT)
+    table = hbase.table(HBASE_TABLE)
+    return map(lambda item: table.row(item, columns=columns), items)
 
 
 def fetch_prequality_dataset(condtitions=None):
