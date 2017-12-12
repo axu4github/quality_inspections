@@ -13,7 +13,10 @@ class TestQualityInspections(unittest.TestCase):
         docs = search_by_solr(solr_condtitions)
 
         self.assertTrue(len(docs) != 0)
-        self.assertTrue("id" in docs[0])
+        self.assertTrue("id" not in docs[0])
+
+    def test_function_get_metas(self):
+        pass
 
 
 if __name__ == "__main__":
