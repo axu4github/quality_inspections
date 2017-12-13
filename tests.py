@@ -137,6 +137,11 @@ class QualityInspectionsTest(unittest.TestCase):
         self.assertTrue(len(data_set) != 0)
         self.assertTrue("id" not in data_set[0])
 
+    @time_analyze
+    def test_quality_inspection(self):
+        """ 测试质检计算 """
+        pass
+
 
 if __name__ == "__main__":
     unittest.main()
