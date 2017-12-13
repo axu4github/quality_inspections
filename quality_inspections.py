@@ -2,7 +2,6 @@
 
 from solrcloudpy.connection import SolrConnection
 from solrcloudpy.parameters import SearchOptions
-from pyspark.sql import SparkSession
 import happybase
 import sys
 reload(sys)
@@ -76,6 +75,7 @@ def quality_inspection(per_dataset):
 
 
 def _init_spark_session():
+    from pyspark.sql import SparkSession
     return SparkSession.builder.appName(APP_NAME).getOrCreate()
 
 
@@ -92,7 +92,10 @@ def distributed_quality_inspection(prequality_dataset=None):
 
 
 def main():
-    pass
+    condtitions = "start_time: {} AND area_of_job: {}".format(
+        "[1427472000000 TO 1427558399000]", "dy-gz")
+    dataset = fetch_prequality_dataset(condtitions)
+    distributed_quality_inspection(dataset)
 
 
 if __name__ == "__main__":
