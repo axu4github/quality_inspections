@@ -14,6 +14,7 @@ pickleshare==0.7.4
 ply==3.10
 prompt-toolkit==1.0.15
 ptyprocess==0.5.2
+pyahocorasick==1.1.6
 Pygments==2.2.0
 requests==2.18.4
 scandir==1.6
