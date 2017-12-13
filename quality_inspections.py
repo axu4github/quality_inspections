@@ -2,6 +2,7 @@
 
 from solrcloudpy.connection import SolrConnection
 from solrcloudpy.parameters import SearchOptions
+from pyspark.sql import SparkSession
 import happybase
 import sys
 reload(sys)
@@ -25,6 +26,16 @@ SOLR_ROWS = 1000000
 HBASE_HOST = "10.0.3.41"
 HBASE_TABLE = "smartv"
 HBASE_TIMEOUT = 60000
+
+APP_NAME = "quality_inspection"
+
+
+def group_by_num(l, n):
+    """ 按照长度分组 """
+    if n <= 0:
+        return l
+
+    return [l[i:i + n] for i in range(0, len(l), n)]
 
 
 def search_by_solr(solr_condtitions):
@@ -59,9 +70,25 @@ def fetch_prequality_dataset(condtitions=None):
     return prequality_dataset
 
 
-def quality_inspection(mini_dataset):
+def quality_inspection(per_dataset):
     """ 根据质检规则对待质检的数据集进行质检 """
     pass
+
+
+def _init_spark_session():
+    return SparkSession.builder.appName(APP_NAME).getOrCreate()
+
+
+def distributed_quality_inspection(prequality_dataset=None):
+    """ 基于Spark的并行质检处理 """
+    if prequality_dataset is not None:
+        prequality_dataset = list(enumerate(prequality_dataset, start=1))
+        spark = _init_spark_session()
+        quality_results = spark.sparkContext \
+                               .parallelize(prequality_dataset) \
+                               .partitionBy(len(prequality_dataset)) \
+                               .map(quality_inspection)
+        quality_results.saveAsTextFile("")
 
 
 def main():
