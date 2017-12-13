@@ -3,7 +3,8 @@
 import unittest
 from quality_inspections import (
     search_by_solr,
-    get_metas
+    get_metas,
+    fetch_prequality_dataset
 )
 
 
@@ -38,6 +39,13 @@ class TestQualityInspections(unittest.TestCase):
         self.assertTrue("cf:callnumber" in metas_of_callnumber[0])
         self.assertTrue("cf:filename" not in metas_of_callnumber[0])
         self.assertTrue("cf:plaintextb" not in metas_of_callnumber[0])
+
+    def test_function_fetch_prequality_dataset(self):
+        """ 测试 fetch_prequality_dataset 方法 """
+        data_set = fetch_prequality_dataset(self.solr_condtition)
+
+        self.assertTrue(len(data_set) != 0)
+        self.assertTrue("id" not in data_set[0])
 
 
 if __name__ == "__main__":
