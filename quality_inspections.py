@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from solrcloudpy.connection import SolrConnection
-from solrcloudpy.parameters import SearchOptions
+import pysolr
 import happybase
-import sys
-reload(sys)
-sys.setdefaultencoding("utf-8")
 
 """
 基于Spark的并行质检处理
@@ -16,7 +12,8 @@ sys.setdefaultencoding("utf-8")
 3. 存储质检结果。
 """
 
-SOLR_NODES = ["10.0.1.27:8983", "10.0.1.28:8983"]
+SOLR_ZOOKEEPER = "10.0.1.27:9983"
+# SOLR_NODES = ["10.0.1.27:8983", "10.0.1.28:8983"]
 SOLR_VERSION = "5.5.1"
 SOLR_TIMEOUT = 60000
 SOLR_COLLECTION = "collection1"
@@ -39,18 +36,10 @@ def group_by_num(l, n):
 
 def search_by_solr(solr_condtitions):
     """ 通过Solr完成检索 """
-    conn = SolrConnection(
-        SOLR_NODES, version=SOLR_VERSION, timeout=SOLR_TIMEOUT)
-    coll = conn[SOLR_COLLECTION]
-
-    se = SearchOptions()
-    se.commonparams.q(solr_condtitions) \
-                   .fl("id") \
-                   .start(0) \
-                   .rows(SOLR_ROWS)
-
-    docs = coll.search(se).result.response.docs
-    return map(lambda doc: doc["id"], docs)
+    zookeeper = pysolr.ZooKeeper(SOLR_ZOOKEEPER)
+    solr = pysolr.SolrCloud(zookeeper, SOLR_COLLECTION)
+    results = solr.search(solr_condtitions)
+    return map(lambda result: result["id"], results)
 
 
 def get_metas(items, columns=None):
