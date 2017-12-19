@@ -93,6 +93,26 @@ class AhocorasickTest(unittest.TestCase):
             self.assertEqual(
                 self.context[start:start + keyword_len], keyword)
 
+    def test_another_ahocorasick(self):
+        self.keywords = ["天安门", "地安门", "广场", "场", "爱", "我", "天安门"]
+        self.context = "我爱北京天安门广场。"
+        self.automaton = ahocorasick.Automaton()
+        for i, keyword in enumerate(self.keywords):
+            self.automaton.add_word(keyword, (i, keyword))
+
+        self.automaton.make_automaton()
+
+        result = {}
+        for end, (i, kw) in self.automaton.iter(self.context):
+            start = end - len(kw) + 1
+            result[kw] = (start, end)
+
+        self.assertEqual(result["我"], (0, 0))
+        self.assertEqual(result["爱"], (1, 1))
+        self.assertEqual(result["天安门"], (4, 6))
+        self.assertEqual(result["广场"], (7, 8))
+        self.assertTrue("地安门" not in result.keys())
+
 
 class QualityInspectionsTest(unittest.TestCase):
 
@@ -104,7 +124,7 @@ class QualityInspectionsTest(unittest.TestCase):
     @time_analyze
     def test_function_search_by_solr(self):
         """ 测试 search_by_solr 方法 """
-        docs = search_by_solr(self.solr_condtition)
+        docs = list(search_by_solr(self.solr_condtition))
 
         self.assertTrue(len(docs) != 0)
         self.assertTrue("id" not in docs[0])
@@ -112,27 +132,28 @@ class QualityInspectionsTest(unittest.TestCase):
     @time_analyze
     def test_function_get_metas(self):
         """ 测试 get_metas 方法 """
-        metas = get_metas(self.ids)
+        metas = list(get_metas(self.ids))
 
         self.assertEqual(len(metas), 1)
-        self.assertTrue("cf:callnumber" in metas[0])
-        self.assertTrue("cf:filename" in metas[0])
-        self.assertTrue("cf:plaintextb" in metas[0])
+        self.assertTrue(b"cf:callnumber" in metas[0])
+        self.assertTrue(b"cf:filename" in metas[0])
+        self.assertTrue(b"cf:plaintextb" in metas[0])
 
     @time_analyze
     def test_function_get_metas_only_callnumber(self):
         """ hbase 只获取 callnumber """
-        metas_of_callnumber = get_metas(self.ids, columns=("cf:callnumber",))
+        metas_of_callnumber = list(
+            get_metas(self.ids, columns=("cf:callnumber",)))
 
         self.assertEqual(len(metas_of_callnumber), 1)
-        self.assertTrue("cf:callnumber" in metas_of_callnumber[0])
-        self.assertTrue("cf:filename" not in metas_of_callnumber[0])
-        self.assertTrue("cf:plaintextb" not in metas_of_callnumber[0])
+        self.assertTrue(b"cf:callnumber" in metas_of_callnumber[0])
+        self.assertTrue(b"cf:filename" not in metas_of_callnumber[0])
+        self.assertTrue(b"cf:plaintextb" not in metas_of_callnumber[0])
 
     @time_analyze
     def test_function_fetch_prequality_dataset(self):
         """ 测试 fetch_prequality_dataset 方法 """
-        data_set = fetch_prequality_dataset(self.solr_condtition)
+        data_set = list(fetch_prequality_dataset(self.solr_condtition))
 
         self.assertTrue(len(data_set) != 0)
         self.assertTrue("id" not in data_set[0])
